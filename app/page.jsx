@@ -9,29 +9,42 @@ export default function Home() {
 
   const start = async () => {
 
-    const response = await fetch('/api/transcribe', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        youtubeUrl: url
+    try {
+
+      setCaptions(['Loading...'])
+
+      const response = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          youtubeUrl: url
+        })
       })
-    })
 
-    const reader = response.body.getReader()
+      const data = await response.json()
 
-    const decoder = new TextDecoder()
+      console.log(data)
 
-    while (true) {
+      if (data.error) {
 
-      const { done, value } = await reader.read()
+        setCaptions([
+          'ERROR: ' + data.error
+        ])
 
-      if (done) break
+        return
+      }
 
-      const chunk = decoder.decode(value)
+      setCaptions([
+        JSON.stringify(data, null, 2)
+      ])
 
-      setCaptions(prev => [...prev, chunk])
+    } catch (err) {
+
+      setCaptions([
+        'CLIENT ERROR: ' + err.message
+      ])
 
     }
 
@@ -39,8 +52,9 @@ export default function Home() {
 
   const extractVideoId = url => {
 
-     const regExp =
-         /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+    const regExp =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+
     const match = url.match(regExp)
 
     return match && match[2].length === 11
@@ -90,7 +104,10 @@ export default function Home() {
           marginTop: 20,
           background: '#111',
           color: '#0f0',
-          padding: 20
+          padding: 20,
+          borderRadius: 10,
+          minHeight: 150,
+          whiteSpace: 'pre-wrap'
         }}
       >
 
