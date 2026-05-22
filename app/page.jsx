@@ -16,7 +16,7 @@ export default function Home() {
     }
 
     setLoading(true)
-    setCaptions(['Starting...'])
+    setCaptions(['Processing...'])
 
     try {
 
@@ -35,14 +35,16 @@ export default function Home() {
       console.log('API RESPONSE:', data)
 
       if (!response.ok) {
+
         setCaptions([
-          '❌ ERROR: ' + (data.error || 'Request failed')
+          '❌ ERROR:',
+          JSON.stringify(data, null, 2)
         ])
+
         setLoading(false)
         return
       }
 
-      // Show result in black box
       setCaptions([
         data.text || data.message || JSON.stringify(data, null, 2)
       ])
@@ -50,12 +52,16 @@ export default function Home() {
     } catch (err) {
 
       setCaptions([
-        '❌ CLIENT ERROR: ' + err.message
+        '❌ CLIENT ERROR:',
+        err.message
       ])
 
     } finally {
+
       setLoading(false)
+
     }
+
   }
 
   const extractVideoId = (url) => {
@@ -73,7 +79,10 @@ export default function Home() {
   const videoId = extractVideoId(url)
 
   return (
-    <main style={{ padding: 20, fontFamily: 'Arial' }}>
+    <main style={{
+      padding: 20,
+      fontFamily: 'Arial'
+    }}>
 
       <h1>🕋 Kaaba Live Translator</h1>
 
@@ -113,7 +122,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* BLACK BOX OUTPUT */}
       <div
         style={{
           marginTop: 20,
@@ -121,17 +129,16 @@ export default function Home() {
           color: '#00ff00',
           padding: 20,
           borderRadius: 10,
-          minHeight: 120,
-          whiteSpace: 'pre-wrap'
+          minHeight: 150,
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word'
         }}
       >
 
         {captions.length === 0
           ? 'Captions will appear here...'
           : captions.map((c, i) => (
-              <p key={i} style={{ margin: 0 }}>
-                {c}
-              </p>
+              <p key={i}>{c}</p>
             ))
         }
 

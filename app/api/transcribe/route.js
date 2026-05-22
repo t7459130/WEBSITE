@@ -26,7 +26,8 @@ export async function POST(req) {
       }, { status: 400 })
     }
 
-    // Get stream info
+    console.log('Fetching YouTube stream...')
+
     const info = await youtubedl(
       youtubeUrl,
       {
@@ -35,6 +36,8 @@ export async function POST(req) {
         preferFreeFormats: true
       }
     )
+
+    console.log('YouTube info fetched')
 
     const audioUrl =
       info.url || info.formats?.[0]?.url
@@ -45,11 +48,11 @@ export async function POST(req) {
       }, { status: 500 })
     }
 
-    // Temp file
     const outputFile =
       path.join('/tmp', 'audio.wav')
 
-    // Convert first 20 sec to wav
+    console.log('Starting ffmpeg...')
+
     await new Promise((resolve, reject) => {
 
       ffmpeg(audioUrl)
@@ -59,17 +62,26 @@ export async function POST(req) {
         .duration(20)
         .format('wav')
         .save(outputFile)
-        .on('end', resolve)
-        .on('error', reject)
+        .on('end', () => {
+          console.log('ffmpeg finished')
+          resolve()
+        })
+        .on('error', (err) => {
+          console.error('ffmpeg error', err)
+          reject(err)
+        })
 
     })
 
-    // Send to Whisper
+    console.log('Sending to OpenAI Whisper...')
+
     const transcription =
       await openai.audio.transcriptions.create({
         file: fs.createReadStream(outputFile),
         model: 'whisper-1'
       })
+
+    console.log('Transcription complete')
 
     return NextResponse.json({
       success: true,
@@ -81,7 +93,8 @@ export async function POST(req) {
     console.error(err)
 
     return NextResponse.json({
-      error: err.message
+      error: err.message,
+      stack: err.stack
     }, { status: 500 })
 
   }
