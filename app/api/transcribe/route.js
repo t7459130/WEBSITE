@@ -1,9 +1,4 @@
 import { NextResponse } from 'next/server'
-import OpenAI from 'openai'
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
 
 export const runtime = 'nodejs'
 
@@ -14,14 +9,13 @@ export async function POST(req) {
     const { youtubeUrl } = await req.json()
 
     if (!youtubeUrl) {
-      return NextResponse.json({
-        error: 'No URL provided'
-      })
+      return NextResponse.json({ error: 'No URL received' }, { status: 400 })
     }
 
+    // TEST RESPONSE FIRST (to confirm pipeline works)
     return NextResponse.json({
-      success: true,
-      message: 'API route working',
+      message: 'Backend working',
+      text: 'Live transcription will appear here once audio processing is enabled',
       url: youtubeUrl
     })
 
@@ -29,8 +23,7 @@ export async function POST(req) {
 
     return NextResponse.json({
       error: err.message
-    })
+    }, { status: 500 })
 
   }
-
 }

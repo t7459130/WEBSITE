@@ -6,12 +6,19 @@ export default function Home() {
 
   const [url, setUrl] = useState('')
   const [captions, setCaptions] = useState([])
+  const [loading, setLoading] = useState(false)
 
   const start = async () => {
 
-    try {
+    if (!url) {
+      setCaptions(['Please paste a YouTube URL'])
+      return
+    }
 
-      setCaptions(['Loading...'])
+    setLoading(true)
+    setCaptions(['Starting...'])
+
+    try {
 
       const response = await fetch('/api/transcribe', {
         method: 'POST',
@@ -25,32 +32,33 @@ export default function Home() {
 
       const data = await response.json()
 
-      console.log(data)
+      console.log('API RESPONSE:', data)
 
-      if (data.error) {
-
+      if (!response.ok) {
         setCaptions([
-          'ERROR: ' + data.error
+          '❌ ERROR: ' + (data.error || 'Request failed')
         ])
-
+        setLoading(false)
         return
       }
 
+      // Show result in black box
       setCaptions([
-        JSON.stringify(data, null, 2)
+        data.text || data.message || JSON.stringify(data, null, 2)
       ])
 
     } catch (err) {
 
       setCaptions([
-        'CLIENT ERROR: ' + err.message
+        '❌ CLIENT ERROR: ' + err.message
       ])
 
+    } finally {
+      setLoading(false)
     }
-
   }
 
-  const extractVideoId = url => {
+  const extractVideoId = (url) => {
 
     const regExp =
       /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
@@ -65,9 +73,9 @@ export default function Home() {
   const videoId = extractVideoId(url)
 
   return (
-    <main style={{ padding: 20 }}>
+    <main style={{ padding: 20, fontFamily: 'Arial' }}>
 
-      <h1>Kaaba Live Translator</h1>
+      <h1>🕋 Kaaba Live Translator</h1>
 
       <input
         value={url}
@@ -75,45 +83,57 @@ export default function Home() {
         placeholder='Paste YouTube livestream URL'
         style={{
           width: '100%',
-          padding: 12
+          padding: 12,
+          marginTop: 10
         }}
       />
 
       <button
         onClick={start}
+        disabled={loading}
         style={{
           marginTop: 10,
-          padding: 12
+          padding: 12,
+          cursor: 'pointer'
         }}
       >
-        Start
+        {loading ? 'Processing...' : 'Start Translation'}
       </button>
 
       {videoId && (
-        <iframe
-          width='100%'
-          height='500'
-          src={`https://www.youtube.com/embed/${videoId}`}
-          style={{ marginTop: 20 }}
-          allowFullScreen
-        />
+        <div style={{ marginTop: 20 }}>
+
+          <iframe
+            width='100%'
+            height='500'
+            src={`https://www.youtube.com/embed/${videoId}`}
+            allowFullScreen
+          />
+
+        </div>
       )}
 
+      {/* BLACK BOX OUTPUT */}
       <div
         style={{
           marginTop: 20,
-          background: '#111',
-          color: '#0f0',
+          background: '#000',
+          color: '#00ff00',
           padding: 20,
           borderRadius: 10,
-          minHeight: 150,
+          minHeight: 120,
           whiteSpace: 'pre-wrap'
         }}
       >
 
-        {captions.map((c, i) => (
-          <p key={i}>{c}</p>
-        ))}
+        {captions.length === 0
+          ? 'Captions will appear here...'
+          : captions.map((c, i) => (
+              <p key={i} style={{ margin: 0 }}>
+                {c}
+              </p>
+            ))
+        }
 
       </div>
 
