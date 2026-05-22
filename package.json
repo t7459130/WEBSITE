@@ -1,0 +1,17 @@
+{
+  "name": "kaaba-live-translator",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "next": "latest",
+    "openai": "^4.52.7",
+    "react": "latest",
+    "react-dom": "latest",
+    "youtube-dl-exec": "^3.0.2"
+  }
+}
