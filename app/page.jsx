@@ -1,66 +1,35 @@
 'use client'
 
 import { useState } from 'react'
+import { io } from 'socket.io-client'
+
+const socket =
+  io('https://YOUR-RAILWAY-URL.up.railway.app')
 
 export default function Home() {
 
   const [url, setUrl] = useState('')
   const [captions, setCaptions] = useState([])
-  const [loading, setLoading] = useState(false)
 
-  const start = async () => {
+  const start = () => {
 
-    if (!url) {
-      setCaptions(['Please paste a YouTube URL'])
-      return
-    }
+    setCaptions([])
 
-    setLoading(true)
-    setCaptions(['Processing...'])
-
-    try {
-
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          youtubeUrl: url
-        })
-      })
-
-      const data = await response.json()
-
-      console.log('API RESPONSE:', data)
-
-      if (!response.ok) {
-
-        setCaptions([
-          '❌ ERROR:',
-          JSON.stringify(data, null, 2)
-        ])
-
-        setLoading(false)
-        return
+    socket.emit(
+      'start-transcription',
+      {
+        youtubeUrl: url
       }
+    )
 
-      setCaptions([
-        data.text || data.message || JSON.stringify(data, null, 2)
+    socket.on('caption', (text) => {
+
+      setCaptions(prev => [
+        ...prev,
+        text
       ])
 
-    } catch (err) {
-
-      setCaptions([
-        '❌ CLIENT ERROR:',
-        err.message
-      ])
-
-    } finally {
-
-      setLoading(false)
-
-    }
+    })
 
   }
 
@@ -76,13 +45,11 @@ export default function Home() {
       : null
   }
 
-  const videoId = extractVideoId(url)
+  const videoId =
+    extractVideoId(url)
 
   return (
-    <main style={{
-      padding: 20,
-      fontFamily: 'Arial'
-    }}>
+    <main style={{ padding: 20 }}>
 
       <h1>🕋 Kaaba Live Translator</h1>
 
@@ -92,55 +59,46 @@ export default function Home() {
         placeholder='Paste YouTube livestream URL'
         style={{
           width: '100%',
-          padding: 12,
-          marginTop: 10
+          padding: 12
         }}
       />
 
       <button
         onClick={start}
-        disabled={loading}
         style={{
           marginTop: 10,
-          padding: 12,
-          cursor: 'pointer'
+          padding: 12
         }}
       >
-        {loading ? 'Processing...' : 'Start Translation'}
+        Start
       </button>
 
       {videoId && (
-        <div style={{ marginTop: 20 }}>
-
-          <iframe
-            width='100%'
-            height='500'
-            src={`https://www.youtube.com/embed/${videoId}`}
-            allowFullScreen
-          />
-
-        </div>
+        <iframe
+          width='100%'
+          height='500'
+          src={`https://www.youtube.com/embed/${videoId}`}
+          style={{
+            marginTop: 20
+          }}
+          allowFullScreen
+        />
       )}
 
       <div
         style={{
           marginTop: 20,
           background: '#000',
-          color: '#00ff00',
+          color: '#0f0',
           padding: 20,
-          borderRadius: 10,
-          minHeight: 150,
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'break-word'
+          minHeight: 200,
+          whiteSpace: 'pre-wrap'
         }}
       >
 
-        {captions.length === 0
-          ? 'Captions will appear here...'
-          : captions.map((c, i) => (
-              <p key={i}>{c}</p>
-            ))
-        }
+        {captions.map((c, i) => (
+          <p key={i}>{c}</p>
+        ))}
 
       </div>
 
